@@ -25,6 +25,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('accounts/', include('allauth.urls')),
     path('', include('a_rtchat.urls')),
+    path('', home_view, name="home"),
     path('profile/', include('a_users.urls')),
     path('@<username>/', profile_view, name="profile"),
 ]

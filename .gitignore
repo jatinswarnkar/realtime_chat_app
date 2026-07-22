@@ -1,8 +1,37 @@
-venv/
-node/
-media/
-migrations/
+# Python / Django ignore rules
 __pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Virtual Environments
+venv/
+.venv/
+env/
+ENV/
+
+# Node / JS
+node/
+node_modules/
+
+# Django local database & media uploads
 db.sqlite3
+db.sqlite3-journal
+media/
+staticfiles/
+static_root/
 .env
+local_settings.py
+
+# OS / IDE generated files
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.swo

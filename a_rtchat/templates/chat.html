@@ -1,41 +1,244 @@
 {%extends 'layouts/blank.html'%}
 
 {% block content %}
-<wrapper class="block max-w-2xl mx-auto my-10 px-6">
-    <div id="chat_window" class="h-[45rem] flex flex-col bg-gray-800 rounded-2xl shadow-2xl relative p-1">
-        <div class="flex justify-center text-emerald-400 bg-gray-800 p-2 sticky top-0 z-10">
-            {% if other_user %}
-            <div id="online-icon"></div>
-            <a href="{% url 'profile' other_user.username %}">
-                <div class="flex items-center gap-2 p-4 sticky top-0 z-10">
-                    <img class="w-10 h-10 rounded-full object-cover" src="{{ other_user.profile.avatar }}" />
+<wrapper class="block max-w-6xl mx-auto my-4 px-4 h-[calc(100vh-7rem)]">
+    <div class="flex h-full bg-white border border-gray-200 rounded-2xl shadow-xl overflow-hidden">
+        
+        <!-- Sidebar -->
+        <div class="w-1/3 border-r border-gray-200 bg-gray-50 flex flex-col">
+            <div class="p-4 border-b border-gray-200 bg-white">
+                <h2 class="text-lg font-bold text-gray-800 m-0">Chats</h2>
+            </div>
+            <div class="flex-1 overflow-y-auto">
+                <a href="{% url 'home' %}" class="block p-4 border-b border-gray-100 hover:bg-orange-50 transition-colors {% if chatroom_name == 'public-chat' %}bg-orange-50 border-l-4 border-l-orange-500{% endif %}">
+                    <div class="flex items-center gap-3">
+                        <div class="bg-orange-100 p-2 rounded-full">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z" />
+                            </svg>
+                        </div>
+                        <span class="font-semibold text-gray-800">Public Chat</span>
+                    </div>
+                </a>
+                {% for chatroom in user.chat_groups.all %}
+                    {% if chatroom.is_private %}
+                        {% for member in chatroom.members.all %}
+                            {% if member != user %}
+                                <a href="{% url 'chatroom' chatroom.group_name %}" class="block p-4 border-b border-gray-100 hover:bg-orange-50 transition-colors {% if chatroom_name == chatroom.group_name %}bg-orange-50 border-l-4 border-l-orange-500{% endif %}">
+                                    <div class="flex items-center gap-3">
+                                        <img class="w-10 h-10 rounded-full object-cover" src="{{ member.profile.avatar }}" />
+                                        <span class="font-semibold text-gray-800">{{ member.profile.name }}</span>
+                                    </div>
+                                </a>
+                            {% endif %}
+                        {% endfor %}
+                    {% endif %}
+                {% endfor %}
+            </div>
+            <div class="p-4 bg-white border-t border-gray-200">
+                 <!-- Link to profile edits or users list for starting new chats in future -->
+                 <a href="{% url 'home' %}" class="w-full bg-orange-100 text-orange-600 font-semibold py-2 rounded-lg hover:bg-orange-200 transition-colors flex justify-center items-center gap-2">
+                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
+                    </svg>
+                     Find Users
+                 </a>
+            </div>
+        </div>
+        
+        <!-- Main Chat Area -->
+        <div id="chat_window" class="w-2/3 flex flex-col bg-[#fffbf5] relative">
+            <div class="flex justify-between items-center bg-white border-b border-gray-200 p-3 h-[72px] sticky top-0 z-10">
+                <div class="flex-1 flex">
+                {% if other_user %}
+                <a href="{% url 'profile' other_user.username %}">
+                    <div class="flex items-center gap-3">
+                        <img class="w-10 h-10 rounded-full object-cover" src="{{ other_user.profile.avatar }}" />
+                        <div>
+                            <div class="font-bold text-gray-800">{{ other_user.profile.name }}</div> 
+                            <div class="text-xs font-light text-gray-500">@{{ other_user.username }}</div>
+                        </div>
+                    </div>
+                </a>
+                {% else %}
+                <div class="flex items-center gap-2 ml-4">
+                    <div class="flex items-center justify-center p-2 bg-orange-100 rounded-full">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z" />
+                        </svg>
+                    </div>
                     <div>
-                        <span class="font-bold text-white">{{ other_user.profile.name }}</span> 
-                        <span class="text-sm font-light text-gray-400">@{{ other_user.username }}</span>
+                        <div class="font-bold text-gray-800">Public Chat</div> 
+                        <div class="text-xs font-light text-gray-500 flex items-center gap-1">
+                            <div class="w-2 h-2 bg-green-500 rounded-full"></div>
+                            <span id="online-count"></span> online
+                        </div>
                     </div>
                 </div>
-            </a>
-            {% else %}
-            <div id="online-icon"></div> 
-            <span id="online-count" class="pr-1"></span>online
-            {% endif %}
-        </div>
-        <div id='chat_container' class="overflow-y-auto grow">
-            <ul id='chat_messages' class="flex flex-col justify-end gap-2 p-4">
-                {% for message in chat_messages reversed %}
-                {%include 'chat_message.html' %}
-                {% endfor %}
-            </ul>
-        </div>
-        <div class="sticky bottom-0 z-10 p-2 bg-gray-800">
-            <div class="flex items-center rounded-xl px-2 py-2">
-                <form id="chat_message_form"  class="w-full"
-                    hx-ext = "ws"
-                    ws-connect = "ws/chatroom/{{ chatroom_name }}"
+                {% endif %}
+                </div>
+                <!-- Whiteboard Toggle -->
+                <button id="toggle-whiteboard" class="p-2 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-100 transition-colors flex items-center gap-2 font-semibold text-sm">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                    </svg>
+                    Whiteboard
+                </button>
+            </div>
+            
+            <div id="whiteboard-container" class="hidden absolute top-[72px] bottom-[76px] left-0 right-0 z-20 bg-white/90 backdrop-blur-sm cursor-crosshair border-b border-gray-200 shadow-inner">
+                <canvas id="whiteboard" class="w-full h-full"></canvas>
+            </div>
+            
+            <div id='chat_container' class="overflow-y-auto grow p-4">
+                <ul id='chat_messages' class="flex flex-col justify-end gap-2">
+                    {% for message in chat_messages reversed %}
+                    {%include 'chat_message.html' %}
+                    {% endfor %}
+                </ul>
+            </div>
+            
+            <div class="sticky bottom-0 z-10 p-4 bg-white border-t border-gray-200">
+                <form id="chat_message_form" class="w-full relative"
+                    hx-ext="ws"
+                    ws-connect="ws/chatroom/{{ chatroom_name }}"
                     ws-send
-                    _="on htmx:wsAfterSend reset() me" >
+                    _="on htmx:wsAfterSend reset() me"
+                    x-data="{ 
+                        codeMode: false, 
+                        codeLang: 'python',
+                        selectedFile: null,
+                        filePreview: null,
+                        onFileSelect(e) {
+                            const file = e.target.files[0];
+                            if (file) {
+                                this.selectedFile = file;
+                                if (file.type.startsWith('image/')) {
+                                    const reader = new FileReader();
+                                    reader.onload = (ev) => { this.filePreview = ev.target.result; };
+                                    reader.readAsDataURL(file);
+                                } else {
+                                    this.filePreview = null;
+                                }
+                            }
+                        },
+                        removeFile() {
+                            this.selectedFile = null;
+                            this.filePreview = null;
+                            if (this.$refs.fileInput) this.$refs.fileInput.value = '';
+                        },
+                        handleFormSubmit(e) {
+                            if (this.selectedFile) {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                const formData = new FormData(this.$refs.formElt);
+                                fetch('{% url "chat-file-upload" chatroom_name %}', {
+                                    method: 'POST',
+                                    headers: {
+                                        'X-CSRFToken': '{{ csrf_token }}'
+                                    },
+                                    body: formData
+                                }).then(res => {
+                                    if (res.ok) {
+                                        this.$refs.formElt.reset();
+                                        this.removeFile();
+                                        this.codeMode = false;
+                                    }
+                                });
+                            }
+                        }
+                    }"
+                    x-ref="formElt"
+                    @submit="handleFormSubmit($event)"
+                    @htmx:ws-after-send="codeMode = false; removeFile();" >
                     {% csrf_token %}
-                    {{ form }}
+                    
+                    <input type="file" name="file" x-ref="fileInput" @change="onFileSelect($event)" class="hidden">
+
+                    <!-- Selected File Preview Chip -->
+                    <template x-if="selectedFile">
+                        <div class="flex items-center gap-3 bg-orange-50 border border-orange-200 text-orange-900 rounded-xl p-2.5 mb-2 relative animate-fade-in-up">
+                            <template x-if="filePreview">
+                                <img :src="filePreview" class="w-12 h-12 object-cover rounded-lg border border-orange-200 shrink-0">
+                            </template>
+                            <template x-if="!filePreview">
+                                <div class="w-12 h-12 bg-orange-100 text-orange-500 rounded-lg flex items-center justify-center shrink-0">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                                    </svg>
+                                </div>
+                            </template>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-sm font-semibold truncate" x-text="selectedFile.name"></p>
+                                <p class="text-xs text-orange-600 font-mono" x-text="(selectedFile.size / 1024 > 1024) ? (selectedFile.size / (1024*1024)).toFixed(2) + ' MB' : (selectedFile.size / 1024).toFixed(1) + ' KB'"></p>
+                            </div>
+                            <button type="button" @click="removeFile()" 
+                                    class="p-1.5 hover:bg-orange-200 rounded-full text-orange-700 transition-colors" title="Remove attachment">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+                    </template>
+
+                    <div class="flex items-end gap-2 w-full">
+                        <div class="flex-1 relative transition-all duration-300 flex flex-col gap-2">
+                            <!-- Normal Chat Input -->
+                            <div class="w-full">
+                                {{ form.body }}
+                            </div>
+                            
+                            <!-- Code Block Input -->
+                            <div x-show="codeMode" x-cloak class="w-full bg-[#1e1e2e] border border-[#2e2e3e] rounded-xl shadow-lg flex flex-col z-20">
+                                <div class="flex justify-between items-center bg-[#252538] px-3 py-2 border-b border-[#2e2e3e] rounded-t-xl">
+                                    <div class="flex items-center gap-2 text-gray-400">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                                        </svg>
+                                        <select name="code_language" x-model="codeLang" class="bg-transparent text-sm text-gray-300 outline-none border-none cursor-pointer p-0 appearance-none font-medium focus:ring-0">
+                                            <option value="python">Python</option>
+                                            <option value="javascript">JavaScript</option>
+                                            <option value="html">HTML</option>
+                                            <option value="css">CSS</option>
+                                            <option value="bash">Bash</option>
+                                            <option value="json">JSON</option>
+                                            <option value="">Plain Text</option>
+                                        </select>
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+                                            <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                        </svg>
+                                    </div>
+                                    <button type="button" @click="codeMode = false" class="text-gray-400 hover:text-white transition-colors bg-transparent border-0 p-1" title="Cancel Code Block">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                        </svg>
+                                    </button>
+                                </div>
+                                <div class="flex rounded-b-xl overflow-hidden">
+                                    <div class="w-8 bg-[#1e1e2e] border-r border-[#2e2e3e] flex flex-col items-center py-3 text-gray-600 text-xs font-mono select-none">
+                                        1
+                                    </div>
+                                    <textarea name="code_body" class="flex-1 bg-transparent text-gray-300 font-mono text-sm p-3 outline-none border-0 focus:ring-0 resize-none h-32" placeholder="Paste your code here..."></textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button type="button" @click="$refs.fileInput.click()" class="p-3 bg-gray-50 text-gray-500 hover:bg-gray-100 rounded-xl transition-colors shrink-0" title="Attach File">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+                            </svg>
+                        </button>
+                        <button type="button" @click="codeMode = !codeMode" class="p-3 bg-indigo-50 text-indigo-500 hover:bg-indigo-100 rounded-xl transition-colors shrink-0" title="Add Code Block">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                            </svg>
+                        </button>
+                        <button type="submit" class="p-3 bg-orange-500 text-white hover:bg-orange-600 rounded-xl transition-colors shrink-0" title="Send Message">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                            </svg>
+                        </button>
+                    </div>
                 </form>
             </div>
         </div>
@@ -49,6 +252,85 @@
         const container = document.getElementById('chat_container');
         container.scrollTop = container.scrollHeight;
     }
-    scrollToBottom()
+    scrollToBottom();
+
+    // Whiteboard Logic
+    const toggleBtn = document.getElementById('toggle-whiteboard');
+    const wbContainer = document.getElementById('whiteboard-container');
+    const canvas = document.getElementById('whiteboard');
+    const ctx = canvas.getContext('2d');
+    
+    let isDrawing = false;
+    let x = 0;
+    let y = 0;
+    
+    function resizeCanvas() {
+        canvas.width = wbContainer.clientWidth;
+        canvas.height = wbContainer.clientHeight;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    
+    const wsScheme = window.location.protocol === "https:" ? "wss" : "ws";
+    const wbSocket = new WebSocket(`${wsScheme}://${window.location.host}/ws/whiteboard/{{ chatroom_name }}`);
+    
+    wbSocket.onmessage = function(e) {
+        const data = JSON.parse(e.data);
+        const w = canvas.width;
+        const h = canvas.height;
+        drawLine(data.x0 * w, data.y0 * h, data.x1 * w, data.y1 * h, data.color, false);
+    };
+
+    toggleBtn.addEventListener('click', () => {
+        wbContainer.classList.toggle('hidden');
+        if(!wbContainer.classList.contains('hidden')) {
+            resizeCanvas();
+        }
+    });
+
+    canvas.addEventListener('mousedown', e => {
+        x = e.offsetX;
+        y = e.offsetY;
+        isDrawing = true;
+    });
+
+    canvas.addEventListener('mousemove', e => {
+        if (isDrawing === true) {
+            drawLine(x, y, e.offsetX, e.offsetY, '#f97316', true); // orange-500
+            x = e.offsetX;
+            y = e.offsetY;
+        }
+    });
+
+    window.addEventListener('mouseup', e => {
+        if (isDrawing === true) {
+            drawLine(x, y, e.offsetX, e.offsetY, '#f97316', true);
+            x = 0;
+            y = 0;
+            isDrawing = false;
+        }
+    });
+
+    function drawLine(x0, y0, x1, y1, color, emit){
+        ctx.beginPath();
+        ctx.moveTo(x0, y0);
+        ctx.lineTo(x1, y1);
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 3;
+        ctx.lineCap = 'round';
+        ctx.stroke();
+        ctx.closePath();
+        
+        if (!emit) { return; }
+        
+        const w = canvas.width;
+        const h = canvas.height;
+        wbSocket.send(JSON.stringify({
+            x0: x0 / w,
+            y0: y0 / h,
+            x1: x1 / w,
+            y1: y1 / h,
+            color: color
+        }));
+    }
 </script>
 {%endblock%}

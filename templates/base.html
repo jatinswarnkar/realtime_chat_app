@@ -15,6 +15,45 @@
     {% django_htmx_script %}
     <script src="https://unpkg.com/hyperscript.org@0.9.13"></script>
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Highlight.js for Code Snippets -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+        document.body.addEventListener('htmx:load', function(evt) {
+            evt.detail.elt.querySelectorAll('pre code').forEach((block) => {
+                if (!block.dataset.highlighted) {
+                    hljs.highlightElement(block);
+                }
+            });
+        });
+        
+        document.body.addEventListener('htmx:wsAfterMessage', function(evt) {
+            setTimeout(() => {
+                document.querySelectorAll('pre code').forEach((block) => {
+                    if (!block.dataset.highlighted) {
+                        hljs.highlightElement(block);
+                    }
+                });
+            }, 50);
+        });
+    </script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    keyframes: {
+                        'fade-in-up': {
+                            '0%': { opacity: '0', transform: 'translateY(10px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        }
+                    },
+                    animation: {
+                        'fade-in-up': 'fade-in-up 0.3s ease-out forwards',
+                    }
+                }
+            }
+        }
+    </script>
     <style type="text/tailwindcss">
         [x-cloak] { 
             display: none !important; 
@@ -29,13 +68,13 @@
             @apply mb-4
         }
         .button, button, [type='submit'], [type='button'] {
-            @apply bg-indigo-600 text-white font-bold rounded-lg shadow-lg transition-all cursor-pointer
+            @apply bg-orange-500 text-white font-bold rounded-lg shadow-lg transition-all cursor-pointer
         }
         .button, button a, [type='submit'], [type='button'] {
             @apply px-6 py-4 inline-block 
         }
         .button:hover, button:hover, [type='submit']:hover, [type='button']:hover {
-            @apply bg-indigo-700
+            @apply bg-orange-600
         }
         .button:active, button:active, [type='submit']:active, [type='button']:active {
             @apply scale-95
@@ -62,13 +101,13 @@
             @apply flex items-center p-2;
         }
         .highlight {
-            @apply !bg-indigo-100;
+            @apply !bg-orange-100;
         }
         .allauth content a {
             @apply underline underline-offset-2
         }
         .allauth content a:hover {
-            @apply text-indigo-500
+            @apply text-orange-500
         }
         .allauth form[action="/accounts/signup/"] ul {
             @apply hidden
@@ -86,7 +125,7 @@
             @apply bg-white pl-0
         }
         .textarea, textarea, input {
-            @apply w-full rounded-lg py-4 px-5 bg-gray-100
+            @apply w-full rounded-lg py-4 px-5 bg-white text-gray-900 border border-gray-300 shadow-sm focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-colors
         }
         .errorlist li {
             @apply p-1 pl-4 border-l-red-500 border-l-4 border-solid mb-2 text-red-500
@@ -111,9 +150,33 @@
         .graylight-dot{
             @apply rounded-full bg-gray-300 p-1.5
         }
+        
+        /* Custom Scrollbar for Light Mode */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            @apply bg-[#fef9f3];
+        }
+        ::-webkit-scrollbar-thumb {
+            @apply bg-orange-200 rounded-full;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            @apply bg-orange-300;
+        }
+        /* Markdown Styles inside Messages */
+        .shadow-md pre {
+            @apply rounded-xl my-2;
+            padding: 0 !important;
+            background: transparent !important;
+        }
+        .shadow-md code {
+            @apply text-sm;
+            background: transparent !important;
+        }
     </style>
 </head>
-<body hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}' class="{% block class %}{% endblock %}">
+<body hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}' class="bg-[#fef9f3] text-gray-900 {% block class %}{% endblock %}">
 	
     {% include 'includes/messages.html' %}
 
