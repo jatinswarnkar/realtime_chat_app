@@ -188,8 +188,59 @@
                 </div>
             </div>
             
-            <div id="whiteboard-container" class="hidden absolute top-[72px] bottom-[76px] left-0 right-0 z-20 bg-white/90 backdrop-blur-sm cursor-crosshair border-b border-gray-200 shadow-inner">
-                <canvas id="whiteboard" class="w-full h-full"></canvas>
+            <div id="whiteboard-container" class="hidden absolute top-[72px] bottom-[76px] left-0 right-0 z-20 bg-white/95 backdrop-blur-md cursor-crosshair border-b border-gray-200 shadow-inner flex flex-col">
+                <!-- Whiteboard Toolbar -->
+                <div class="bg-white/90 border-b border-gray-200 px-4 py-2 flex items-center justify-between shadow-sm z-30 select-none flex-wrap gap-2">
+                    <div class="flex items-center gap-3">
+                        <!-- Tool Selection: Pen vs Eraser -->
+                        <div class="flex bg-gray-100 p-1 rounded-xl gap-1">
+                            <button type="button" id="wb-tool-pen" class="wb-tool-btn active px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all bg-white text-orange-600 shadow-sm border-0 cursor-pointer">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                </svg>
+                                Pen
+                            </button>
+                            <button type="button" id="wb-tool-eraser" class="wb-tool-btn px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all text-gray-600 hover:text-gray-900 border-0 cursor-pointer">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                                Eraser
+                            </button>
+                        </div>
+
+                        <!-- Color Palette -->
+                        <div id="wb-colors" class="flex items-center gap-1.5 pl-2 border-l border-gray-200">
+                            <button type="button" data-color="#f97316" class="wb-color-btn w-6 h-6 rounded-full bg-orange-500 ring-2 ring-orange-500 ring-offset-2 transition-transform scale-110 border-0 cursor-pointer" title="Orange"></button>
+                            <button type="button" data-color="#1e293b" class="wb-color-btn w-6 h-6 rounded-full bg-slate-800 hover:scale-105 transition-transform border-0 cursor-pointer" title="Dark Slate"></button>
+                            <button type="button" data-color="#ef4444" class="wb-color-btn w-6 h-6 rounded-full bg-red-500 hover:scale-105 transition-transform border-0 cursor-pointer" title="Red"></button>
+                            <button type="button" data-color="#3b82f6" class="wb-color-btn w-6 h-6 rounded-full bg-blue-500 hover:scale-105 transition-transform border-0 cursor-pointer" title="Blue"></button>
+                            <button type="button" data-color="#22c55e" class="wb-color-btn w-6 h-6 rounded-full bg-green-500 hover:scale-105 transition-transform border-0 cursor-pointer" title="Green"></button>
+                            <button type="button" data-color="#a855f7" class="wb-color-btn w-6 h-6 rounded-full bg-purple-500 hover:scale-105 transition-transform border-0 cursor-pointer" title="Purple"></button>
+                        </div>
+
+                        <!-- Brush Size Picker -->
+                        <div id="wb-sizes" class="flex items-center gap-1 pl-2 border-l border-gray-200">
+                            <button type="button" data-size="3" class="wb-size-btn p-1.5 rounded-lg bg-gray-100 text-xs font-bold text-gray-700 transition-colors ring-2 ring-orange-400 border-0 cursor-pointer" title="Thin">S</button>
+                            <button type="button" data-size="7" class="wb-size-btn p-1.5 rounded-lg text-xs font-bold text-gray-500 transition-colors hover:bg-gray-100 border-0 cursor-pointer" title="Medium">M</button>
+                            <button type="button" data-size="16" class="wb-size-btn p-1.5 rounded-lg text-xs font-bold text-gray-500 transition-colors hover:bg-gray-100 border-0 cursor-pointer" title="Thick">L</button>
+                        </div>
+                    </div>
+
+                    <!-- Clear Canvas -->
+                    <div class="flex items-center gap-2">
+                        <button type="button" id="wb-clear" class="px-3 py-1.5 bg-red-50 text-red-600 hover:bg-red-100 active:scale-95 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all border border-red-200 cursor-pointer" title="Clear Canvas">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                            Clear Canvas
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Canvas Wrapper -->
+                <div class="flex-1 relative w-full h-full overflow-hidden">
+                    <canvas id="whiteboard" class="w-full h-full"></canvas>
+                </div>
             </div>
             
             {% if is_opted_out %}
@@ -375,82 +426,188 @@
     }
     scrollToBottom();
 
-    // Whiteboard Logic
+    // Enhanced Whiteboard Logic
     const toggleBtn = document.getElementById('toggle-whiteboard');
     const wbContainer = document.getElementById('whiteboard-container');
     const canvas = document.getElementById('whiteboard');
     const ctx = canvas.getContext('2d');
-    
+
+    let currentTool = 'pen'; // 'pen' or 'eraser'
+    let currentColor = '#f97316';
+    let currentSize = 3;
     let isDrawing = false;
     let x = 0;
     let y = 0;
-    
+
     function resizeCanvas() {
-        canvas.width = wbContainer.clientWidth;
-        canvas.height = wbContainer.clientHeight;
+        if (!wbContainer || !canvas) return;
+        const parent = canvas.parentElement;
+        if (!parent) return;
+        canvas.width = parent.clientWidth;
+        canvas.height = parent.clientHeight;
     }
     window.addEventListener('resize', resizeCanvas);
-    
+
     const wsScheme = window.location.protocol === "https:" ? "wss" : "ws";
     const wbSocket = new WebSocket(`${wsScheme}://${window.location.host}/ws/whiteboard/{{ chatroom_name }}`);
-    
+
     wbSocket.onmessage = function(e) {
         const data = JSON.parse(e.data);
+        if (data.action === 'clear') {
+            clearLocalCanvas();
+            return;
+        }
         const w = canvas.width;
         const h = canvas.height;
-        drawLine(data.x0 * w, data.y0 * h, data.x1 * w, data.y1 * h, data.color, false);
+        drawLine(
+            data.x0 * w, 
+            data.y0 * h, 
+            data.x1 * w, 
+            data.y1 * h, 
+            data.color, 
+            data.size, 
+            data.isEraser, 
+            false
+        );
     };
 
-    toggleBtn.addEventListener('click', () => {
-        wbContainer.classList.toggle('hidden');
-        if(!wbContainer.classList.contains('hidden')) {
-            resizeCanvas();
+    if (toggleBtn && wbContainer) {
+        toggleBtn.addEventListener('click', () => {
+            wbContainer.classList.toggle('hidden');
+            if (!wbContainer.classList.contains('hidden')) {
+                resizeCanvas();
+            }
+        });
+    }
+
+    // Tool switching
+    const penBtn = document.getElementById('wb-tool-pen');
+    const eraserBtn = document.getElementById('wb-tool-eraser');
+
+    if (penBtn && eraserBtn) {
+        penBtn.addEventListener('click', () => {
+            currentTool = 'pen';
+            penBtn.classList.add('bg-white', 'text-orange-600', 'shadow-sm');
+            penBtn.classList.remove('text-gray-600');
+            eraserBtn.classList.remove('bg-white', 'text-orange-600', 'shadow-sm');
+            eraserBtn.classList.add('text-gray-600');
+            canvas.style.cursor = 'crosshair';
+        });
+
+        eraserBtn.addEventListener('click', () => {
+            currentTool = 'eraser';
+            eraserBtn.classList.add('bg-white', 'text-orange-600', 'shadow-sm');
+            eraserBtn.classList.remove('text-gray-600');
+            penBtn.classList.remove('bg-white', 'text-orange-600', 'shadow-sm');
+            penBtn.classList.add('text-gray-600');
+            canvas.style.cursor = 'cell';
+        });
+    }
+
+    // Color buttons
+    document.querySelectorAll('.wb-color-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            currentColor = btn.dataset.color;
+            document.querySelectorAll('.wb-color-btn').forEach(b => b.classList.remove('ring-2', 'ring-orange-500', 'ring-offset-2', 'scale-110'));
+            btn.classList.add('ring-2', 'ring-orange-500', 'ring-offset-2', 'scale-110');
+            if (currentTool === 'eraser' && penBtn) penBtn.click();
+        });
+    });
+
+    // Size buttons
+    document.querySelectorAll('.wb-size-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            currentSize = parseInt(btn.dataset.size);
+            document.querySelectorAll('.wb-size-btn').forEach(b => {
+                b.classList.remove('ring-2', 'ring-orange-400', 'text-gray-700', 'bg-gray-100');
+                b.classList.add('text-gray-500');
+            });
+            btn.classList.add('ring-2', 'ring-orange-400', 'text-gray-700', 'bg-gray-100');
+            btn.classList.remove('text-gray-500');
+        });
+    });
+
+    // Clear Canvas
+    function clearLocalCanvas() {
+        if (ctx && canvas) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
         }
-    });
+    }
 
-    canvas.addEventListener('mousedown', e => {
-        x = e.offsetX;
-        y = e.offsetY;
-        isDrawing = true;
-    });
+    const clearBtn = document.getElementById('wb-clear');
+    if (clearBtn) {
+        clearBtn.addEventListener('click', () => {
+            if (confirm('Clear the entire whiteboard for everyone in the room?')) {
+                clearLocalCanvas();
+                wbSocket.send(JSON.stringify({ action: 'clear' }));
+            }
+        });
+    }
 
-    canvas.addEventListener('mousemove', e => {
-        if (isDrawing === true) {
-            drawLine(x, y, e.offsetX, e.offsetY, '#f97316', true); // orange-500
+    // Mouse drawing handlers
+    if (canvas) {
+        canvas.addEventListener('mousedown', e => {
             x = e.offsetX;
             y = e.offsetY;
-        }
-    });
+            isDrawing = true;
+        });
 
-    window.addEventListener('mouseup', e => {
-        if (isDrawing === true) {
-            drawLine(x, y, e.offsetX, e.offsetY, '#f97316', true);
-            x = 0;
-            y = 0;
-            isDrawing = false;
-        }
-    });
+        canvas.addEventListener('mousemove', e => {
+            if (isDrawing) {
+                const isEraser = (currentTool === 'eraser');
+                const size = isEraser ? currentSize * 3 : currentSize;
+                drawLine(x, y, e.offsetX, e.offsetY, currentColor, size, isEraser, true);
+                x = e.offsetX;
+                y = e.offsetY;
+            }
+        });
 
-    function drawLine(x0, y0, x1, y1, color, emit){
+        window.addEventListener('mouseup', () => {
+            if (isDrawing) {
+                const isEraser = (currentTool === 'eraser');
+                const size = isEraser ? currentSize * 3 : currentSize;
+                drawLine(x, y, x, y, currentColor, size, isEraser, true);
+                x = 0;
+                y = 0;
+                isDrawing = false;
+            }
+        });
+    }
+
+    function drawLine(x0, y0, x1, y1, color, size, isEraser, emit) {
+        if (!ctx) return;
+        ctx.save();
         ctx.beginPath();
         ctx.moveTo(x0, y0);
         ctx.lineTo(x1, y1);
-        ctx.strokeStyle = color;
-        ctx.lineWidth = 3;
+        ctx.lineWidth = size || 3;
         ctx.lineCap = 'round';
-        ctx.stroke();
+        ctx.lineJoin = 'round';
+
+        if (isEraser) {
+            ctx.globalCompositeOperation = 'destination-out';
+            ctx.stroke();
+        } else {
+            ctx.globalCompositeOperation = 'source-over';
+            ctx.strokeStyle = color || '#f97316';
+            ctx.stroke();
+        }
         ctx.closePath();
-        
-        if (!emit) { return; }
-        
+        ctx.restore();
+
+        if (!emit) return;
+
         const w = canvas.width;
         const h = canvas.height;
         wbSocket.send(JSON.stringify({
+            action: 'draw',
             x0: x0 / w,
             y0: y0 / h,
             x1: x1 / w,
             y1: y1 / h,
-            color: color
+            color: color,
+            size: size,
+            isEraser: isEraser
         }));
     }
 </script>
