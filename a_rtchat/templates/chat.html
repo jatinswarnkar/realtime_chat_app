@@ -179,11 +179,15 @@
                         </a>
                         {% endif %}
                     {% endif %}
-                    <button id="toggle-whiteboard" class="p-2 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-100 transition-colors flex items-center gap-2 font-semibold text-sm">
+                    <button id="toggle-whiteboard" class="p-2 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-100 transition-all flex items-center gap-2 font-semibold text-sm relative border border-transparent">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                         </svg>
-                        Whiteboard
+                        <span>Whiteboard</span>
+                        <span id="wb-activity-badge" class="hidden items-center gap-1 bg-orange-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm">
+                            <span class="w-1.5 h-1.5 bg-white rounded-full animate-ping"></span>
+                            Active
+                        </span>
                     </button>
                 </div>
             </div>
@@ -428,7 +432,7 @@
     }
     scrollToBottom();
 
-    // Enhanced Whiteboard Logic
+    // Enhanced Whiteboard Logic with Persistent History & Activity Signal
     const toggleBtn = document.getElementById('toggle-whiteboard');
     const wbContainer = document.getElementById('whiteboard-container');
     const canvas = document.getElementById('whiteboard');
@@ -437,6 +441,7 @@
 
     const currentUserId = {{ request.user.id }};
     const userCursors = {};
+    const drawingHistory = [];
 
     let currentTool = 'pen'; // 'pen' or 'eraser'
     let currentColor = '#f97316';
@@ -444,6 +449,27 @@
     let isDrawing = false;
     let x = 0;
     let y = 0;
+    let wbActivityTimeout = null;
+
+    function redrawAll() {
+        if (!ctx || !canvas) return;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        const w = canvas.width;
+        const h = canvas.height;
+        for (const stroke of drawingHistory) {
+            drawLine(
+                stroke.x0 * w,
+                stroke.y0 * h,
+                stroke.x1 * w,
+                stroke.y1 * h,
+                stroke.color,
+                stroke.size,
+                stroke.isEraser,
+                false,
+                true // noHistory: true
+            );
+        }
+    }
 
     function resizeCanvas() {
         if (!wbContainer || !canvas) return;
@@ -451,11 +477,37 @@
         if (!parent) return;
         canvas.width = parent.clientWidth;
         canvas.height = parent.clientHeight;
+        redrawAll();
     }
     window.addEventListener('resize', resizeCanvas);
 
+    function showWhiteboardActivity(userId) {
+        if (userId === currentUserId) return;
+        const badge = document.getElementById('wb-activity-badge');
+        const toggleBtnEl = document.getElementById('toggle-whiteboard');
+        if (badge) badge.classList.remove('hidden');
+        if (badge && badge.classList) badge.style.display = 'inline-flex';
+        if (toggleBtnEl) {
+            toggleBtnEl.classList.add('ring-2', 'ring-orange-500', 'ring-offset-1', '!bg-orange-50', '!text-orange-600');
+        }
+        if (wbActivityTimeout) clearTimeout(wbActivityTimeout);
+        wbActivityTimeout = setTimeout(() => {
+            if (badge) {
+                badge.classList.add('hidden');
+                badge.style.display = 'none';
+            }
+            if (toggleBtnEl) {
+                toggleBtnEl.classList.remove('ring-2', 'ring-orange-500', 'ring-offset-1', '!bg-orange-50', '!text-orange-600');
+            }
+        }, 3500);
+    }
+
     const wsScheme = window.location.protocol === "https:" ? "wss" : "ws";
     const wbSocket = new WebSocket(`${wsScheme}://${window.location.host}/ws/whiteboard/{{ chatroom_name }}`);
+
+    wbSocket.addEventListener('open', () => {
+        wbSocket.send(JSON.stringify({ action: 'request_history' }));
+    });
 
     function updateUserCursor(userId, username, avatar, xRatio, yRatio, color, isEraser) {
         if (!cursorsLayer || userId === currentUserId || !canvas) return;
@@ -500,11 +552,29 @@
     wbSocket.onmessage = function(e) {
         const data = JSON.parse(e.data);
         if (data.action === 'clear') {
+            drawingHistory.length = 0;
             clearLocalCanvas();
             return;
         }
-        const w = canvas.width;
-        const h = canvas.height;
+        if (data.action === 'request_history') {
+            if (drawingHistory.length > 0) {
+                wbSocket.send(JSON.stringify({
+                    action: 'sync_history',
+                    history: drawingHistory
+                }));
+            }
+            return;
+        }
+        if (data.action === 'sync_history') {
+            if (data.history && data.history.length > drawingHistory.length) {
+                drawingHistory.length = 0;
+                drawingHistory.push(...data.history);
+                redrawAll();
+            }
+            return;
+        }
+        const w = canvas.width || 1;
+        const h = canvas.height || 1;
         drawLine(
             data.x0 * w, 
             data.y0 * h, 
@@ -513,9 +583,11 @@
             data.color, 
             data.size, 
             data.isEraser, 
+            false,
             false
         );
         if (data.userId && data.userId !== currentUserId) {
+            showWhiteboardActivity(data.userId);
             updateUserCursor(data.userId, data.username, data.avatar, data.x1, data.y1, data.color, data.isEraser);
         }
     };
@@ -587,6 +659,7 @@
     if (clearBtn) {
         clearBtn.addEventListener('click', () => {
             if (confirm('Clear the entire whiteboard for everyone in the room?')) {
+                drawingHistory.length = 0;
                 clearLocalCanvas();
                 wbSocket.send(JSON.stringify({ action: 'clear' }));
             }
@@ -605,7 +678,7 @@
             if (isDrawing) {
                 const isEraser = (currentTool === 'eraser');
                 const size = isEraser ? currentSize * 3 : currentSize;
-                drawLine(x, y, e.offsetX, e.offsetY, currentColor, size, isEraser, true);
+                drawLine(x, y, e.offsetX, e.offsetY, currentColor, size, isEraser, true, false);
                 x = e.offsetX;
                 y = e.offsetY;
             }
@@ -615,7 +688,7 @@
             if (isDrawing) {
                 const isEraser = (currentTool === 'eraser');
                 const size = isEraser ? currentSize * 3 : currentSize;
-                drawLine(x, y, x, y, currentColor, size, isEraser, true);
+                drawLine(x, y, x, y, currentColor, size, isEraser, true, false);
                 x = 0;
                 y = 0;
                 isDrawing = false;
@@ -623,8 +696,21 @@
         });
     }
 
-    function drawLine(x0, y0, x1, y1, color, size, isEraser, emit) {
-        if (!ctx) return;
+    function drawLine(x0, y0, x1, y1, color, size, isEraser, emit, noHistory) {
+        if (!ctx || !canvas) return;
+        const w = canvas.width || 1;
+        const h = canvas.height || 1;
+        if (!noHistory) {
+            drawingHistory.push({
+                x0: x0 / w,
+                y0: y0 / h,
+                x1: x1 / w,
+                y1: y1 / h,
+                color: color,
+                size: size,
+                isEraser: isEraser
+            });
+        }
         ctx.save();
         ctx.beginPath();
         ctx.moveTo(x0, y0);
@@ -646,8 +732,6 @@
 
         if (!emit) return;
 
-        const w = canvas.width;
-        const h = canvas.height;
         wbSocket.send(JSON.stringify({
             action: 'draw',
             x0: x0 / w,
