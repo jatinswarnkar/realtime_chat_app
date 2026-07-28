@@ -67,22 +67,22 @@
         p {
             @apply mb-4
         }
-        .button, button, [type='submit'], [type='button'] {
+        .button {
             @apply bg-orange-500 text-white font-bold rounded-lg shadow-md transition-all duration-150 cursor-pointer select-none
         }
-        .button, button a, [type='submit'], [type='button'] {
+        .button, .button a {
             @apply px-6 py-4 inline-block 
         }
-        .button:hover, button:hover, [type='submit']:hover, [type='button']:hover {
+        .button:hover {
             @apply bg-orange-600 shadow-lg -translate-y-0.5
         }
-        .button:active, button:active, [type='submit']:active, [type='button']:active {
+        .button:active {
             @apply scale-95 translate-y-0 shadow-sm brightness-90
         }
-        .button.alert, button.alert {
+        .button.alert {
             @apply bg-red-700
         }
-        .button.alert:hover, button.alert:hover {
+        .button.alert:hover {
             @apply bg-red-600
         }
         .button-red {

@@ -261,6 +261,7 @@
                 </a>
             </div>
             {% else %}
+            <div id="chat_container" class="flex-1 overflow-y-auto p-4">
                 <ul id='chat_messages' class="flex flex-col justify-end gap-2">
                     {% for message in chat_messages reversed %}
                     {%include 'chat_message.html' %}
