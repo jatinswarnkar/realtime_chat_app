@@ -141,6 +141,7 @@ class ChatroomConsumer(WebsocketConsumer):
 
 class WhiteboardConsumer(WebsocketConsumer):
     def connect(self):
+        self.user = self.scope['user']
         self.chatroom_name = self.scope['url_route']['kwargs']['chatroom_name']
         async_to_sync(self.channel_layer.group_add)(
             f"wb_{self.chatroom_name}", self.channel_name
@@ -153,6 +154,19 @@ class WhiteboardConsumer(WebsocketConsumer):
         )
         
     def receive(self, text_data):
+        try:
+            data = json.loads(text_data)
+            if hasattr(self.user, 'profile'):
+                data['username'] = self.user.profile.name
+                data['avatar'] = self.user.profile.avatar
+            else:
+                data['username'] = self.user.username
+                data['avatar'] = '/static/images/avatar.svg'
+            data['userId'] = self.user.id
+            text_data = json.dumps(data)
+        except Exception:
+            pass
+
         async_to_sync(self.channel_layer.group_send)(
             f"wb_{self.chatroom_name}",
             {

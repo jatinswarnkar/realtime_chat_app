@@ -239,6 +239,7 @@
 
                 <!-- Canvas Wrapper -->
                 <div class="flex-1 relative w-full h-full overflow-hidden">
+                    <div id="wb-cursors" class="absolute inset-0 pointer-events-none z-30 overflow-hidden"></div>
                     <canvas id="whiteboard" class="w-full h-full"></canvas>
                 </div>
             </div>
@@ -430,7 +431,11 @@
     const toggleBtn = document.getElementById('toggle-whiteboard');
     const wbContainer = document.getElementById('whiteboard-container');
     const canvas = document.getElementById('whiteboard');
-    const ctx = canvas.getContext('2d');
+    const cursorsLayer = document.getElementById('wb-cursors');
+    const ctx = canvas ? canvas.getContext('2d') : null;
+
+    const currentUserId = {{ request.user.id }};
+    const userCursors = {};
 
     let currentTool = 'pen'; // 'pen' or 'eraser'
     let currentColor = '#f97316';
@@ -451,6 +456,46 @@
     const wsScheme = window.location.protocol === "https:" ? "wss" : "ws";
     const wbSocket = new WebSocket(`${wsScheme}://${window.location.host}/ws/whiteboard/{{ chatroom_name }}`);
 
+    function updateUserCursor(userId, username, avatar, xRatio, yRatio, color, isEraser) {
+        if (!cursorsLayer || userId === currentUserId || !canvas) return;
+        
+        let cursorEl = document.getElementById('wb-cursor-' + userId);
+        if (!cursorEl) {
+            cursorEl = document.createElement('div');
+            cursorEl.id = 'wb-cursor-' + userId;
+            cursorEl.className = 'absolute top-0 left-0 transition-transform duration-75 ease-out flex items-center gap-1.5 bg-white/95 text-gray-800 text-[11px] font-bold px-2 py-1 rounded-full shadow-lg border border-gray-200 backdrop-blur-sm z-30 select-none';
+            cursorEl.innerHTML = `
+                <img src="${avatar || '/static/images/avatar.svg'}" class="w-4 h-4 rounded-full object-cover shrink-0 ring-1 ring-gray-300">
+                <span class="truncate max-w-[80px]">${username || 'User'}</span>
+                <svg xmlns="http://www.w3.org/2000/svg" class="wb-pen-icon h-3.5 w-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                </svg>
+            `;
+            cursorsLayer.appendChild(cursorEl);
+            userCursors[userId] = { element: cursorEl, timer: null };
+        }
+
+        const px = Math.round(xRatio * canvas.width);
+        const py = Math.round(yRatio * canvas.height);
+        cursorEl.style.transform = `translate(${px}px, ${py}px)`;
+
+        const penIcon = cursorEl.querySelector('.wb-pen-icon');
+        if (penIcon) {
+            penIcon.style.color = isEraser ? '#64748b' : (color || '#f97316');
+        }
+
+        if (userCursors[userId] && userCursors[userId].timer) {
+            clearTimeout(userCursors[userId].timer);
+        }
+
+        if (userCursors[userId]) {
+            userCursors[userId].timer = setTimeout(() => {
+                if (cursorEl) cursorEl.remove();
+                delete userCursors[userId];
+            }, 3000);
+        }
+    }
+
     wbSocket.onmessage = function(e) {
         const data = JSON.parse(e.data);
         if (data.action === 'clear') {
@@ -469,6 +514,9 @@
             data.isEraser, 
             false
         );
+        if (data.userId && data.userId !== currentUserId) {
+            updateUserCursor(data.userId, data.username, data.avatar, data.x1, data.y1, data.color, data.isEraser);
+        }
     };
 
     if (toggleBtn && wbContainer) {
