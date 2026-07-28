@@ -1,9 +1,72 @@
 {%extends 'layouts/blank.html'%}
 
 {% block content %}
-<wrapper class="block max-w-6xl mx-auto my-4 px-4 h-[calc(100vh-7rem)]">
-    <div class="flex h-full bg-white border border-gray-200 rounded-2xl shadow-xl overflow-hidden">
+<wrapper x-data="{ showUsersModal: false, searchQuery: '' }" class="block max-w-6xl mx-auto my-4 px-4 h-[calc(100vh-7rem)]">
+    <div class="flex h-full bg-white border border-gray-200 rounded-2xl shadow-xl overflow-hidden relative">
         
+        <!-- Find Users Modal -->
+        <div x-show="showUsersModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+             x-transition:enter="transition ease-out duration-200"
+             x-transition:enter-start="opacity-0"
+             x-transition:enter-end="opacity-100"
+             x-transition:leave="transition ease-in duration-150"
+             x-transition:leave-start="opacity-100"
+             x-transition:leave-end="opacity-0">
+            <div @click.away="showUsersModal = false" class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 relative border border-gray-100"
+                 x-transition:enter="transition ease-out duration-200"
+                 x-transition:enter-start="opacity-0 scale-95"
+                 x-transition:enter-end="opacity-100 scale-100">
+                
+                <div class="flex justify-between items-center pb-3 border-b border-gray-100">
+                    <h3 class="text-xl font-bold text-gray-900 flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                        </svg>
+                        Find Users
+                    </h3>
+                    <button type="button" @click="showUsersModal = false" class="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-lg">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+
+                <div class="my-4">
+                    <div class="relative">
+                        <input type="text" x-model="searchQuery" placeholder="Search by name or @username..." class="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-orange-500 focus:bg-white transition-colors" />
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400 absolute left-3 top-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                    </div>
+                </div>
+
+                <div class="max-h-80 overflow-y-auto space-y-2 pr-1">
+                    {% for member in users %}
+                    <div x-show="!searchQuery || '{{ member.profile.name|escapejs }}'.toLowerCase().includes(searchQuery.toLowerCase()) || '{{ member.username|escapejs }}'.toLowerCase().includes(searchQuery.toLowerCase())"
+                         class="flex items-center justify-between p-3 bg-gray-50 hover:bg-orange-50 rounded-xl transition-colors border border-gray-100">
+                        <a href="{% url 'profile' member.username %}" class="flex items-center gap-3 min-w-0">
+                            <img class="w-10 h-10 rounded-full object-cover ring-2 ring-orange-200 shrink-0" src="{{ member.profile.avatar }}" />
+                            <div class="min-w-0">
+                                <div class="font-bold text-gray-800 text-sm truncate">{{ member.profile.name }}</div>
+                                <div class="text-xs text-gray-500 truncate">@{{ member.username }}</div>
+                            </div>
+                        </a>
+                        <a href="{% url 'start-chat' member.username %}" class="bg-orange-500 hover:bg-orange-600 text-white font-semibold text-xs px-3.5 py-2 rounded-lg transition-colors shadow-sm shrink-0 flex items-center gap-1.5">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                            </svg>
+                            Message
+                        </a>
+                    </div>
+                    {% empty %}
+                    <div class="text-center py-8 text-gray-400 text-sm">
+                        No other users registered yet.
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
         <!-- Sidebar -->
         <div class="w-1/3 border-r border-gray-200 bg-gray-50 flex flex-col">
             <div class="p-4 border-b border-gray-200 bg-white">
@@ -36,13 +99,12 @@
                 {% endfor %}
             </div>
             <div class="p-4 bg-white border-t border-gray-200">
-                 <!-- Link to profile edits or users list for starting new chats in future -->
-                 <a href="{% url 'home' %}" class="w-full bg-orange-100 text-orange-600 font-semibold py-2 rounded-lg hover:bg-orange-200 transition-colors flex justify-center items-center gap-2">
+                 <button type="button" @click="showUsersModal = true" class="w-full bg-orange-100 text-orange-600 font-semibold py-2.5 rounded-lg hover:bg-orange-200 transition-colors flex justify-center items-center gap-2 cursor-pointer border-0">
                      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                         <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
                     </svg>
                      Find Users
-                 </a>
+                 </button>
             </div>
         </div>
         
@@ -71,7 +133,7 @@
                         <div class="font-bold text-gray-800">Public Chat</div> 
                         <div class="text-xs font-light text-gray-500 flex items-center gap-1">
                             <div class="w-2 h-2 bg-green-500 rounded-full"></div>
-                            <span id="online-count"></span> online
+                            <span id="online-count">{% if chat_group %}{{ chat_group.users_online.count }}{% else %}0{% endif %}</span> online
                         </div>
                     </div>
                 </div>

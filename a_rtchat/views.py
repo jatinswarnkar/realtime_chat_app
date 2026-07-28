@@ -39,11 +39,15 @@ def chat_view(request, chatroom_name='public-chat'):
             }
             return render(request,'partials/chat_message_p.html',context)
     
+    users = User.objects.exclude(id=request.user.id).select_related('profile')
+    
     context = {
         'chat_messages': chat_messages,
         'form': form,
         'other_user': other_user,
         'chatroom_name': chatroom_name,
+        'chat_group': chat_group,
+        'users': users,
     }
     
     return render(request,'chat.html',context)
