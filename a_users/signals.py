@@ -13,6 +13,12 @@ def user_postsave(sender, instance, created, **kwargs):
         Profile.objects.create(
             user = user,
         )
+        try:
+            from a_rtchat.models import ChatGroup
+            public_chat, _ = ChatGroup.objects.get_or_create(group_name='public-chat')
+            public_chat.members.add(user)
+        except Exception:
+            pass
     else:
         # update allauth emailaddress if exists 
         try:

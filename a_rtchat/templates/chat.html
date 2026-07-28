@@ -90,13 +90,18 @@
             </div>
             <div class="flex-1 overflow-y-auto">
                 <a href="{% url 'home' %}" class="block p-4 border-b border-gray-100 hover:bg-orange-50 transition-colors {% if chatroom_name == 'public-chat' %}bg-orange-50 border-l-4 border-l-orange-500{% endif %}">
-                    <div class="flex items-center gap-3">
-                        <div class="bg-orange-100 p-2 rounded-full">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z" />
-                            </svg>
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <div class="bg-orange-100 p-2 rounded-full">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z" />
+                                </svg>
+                            </div>
+                            <span class="font-semibold text-gray-800">Public Chat</span>
                         </div>
-                        <span class="font-semibold text-gray-800">Public Chat</span>
+                        {% if user.profile.optout_public_chat %}
+                        <span class="text-[10px] font-bold uppercase tracking-wider bg-gray-200 text-gray-600 px-2 py-0.5 rounded-full">Opted Out</span>
+                        {% endif %}
                     </div>
                 </a>
                 {% for chatroom in user.chat_groups.all %}
@@ -155,20 +160,55 @@
                 </div>
                 {% endif %}
                 </div>
-                <!-- Whiteboard Toggle -->
-                <button id="toggle-whiteboard" class="p-2 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-100 transition-colors flex items-center gap-2 font-semibold text-sm">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                    </svg>
-                    Whiteboard
-                </button>
+                <!-- Opt Out / Re-join button & Whiteboard Toggle -->
+                <div class="flex items-center gap-2">
+                    {% if chatroom_name == 'public-chat' %}
+                        {% if is_opted_out %}
+                        <a href="{% url 'toggle-public-chat' %}" class="p-2 px-3 bg-green-50 text-green-600 rounded-lg hover:bg-green-100 active:scale-95 transition-all flex items-center gap-1.5 font-semibold text-xs border border-green-200">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                            </svg>
+                            Join Chat
+                        </a>
+                        {% else %}
+                        <a href="{% url 'toggle-public-chat' %}" class="p-2 px-3 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 active:scale-95 transition-all flex items-center gap-1.5 font-semibold text-xs border border-red-200" title="Leave Public Chat">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                            </svg>
+                            Opt Out
+                        </a>
+                        {% endif %}
+                    {% endif %}
+                    <button id="toggle-whiteboard" class="p-2 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-100 transition-colors flex items-center gap-2 font-semibold text-sm">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                        </svg>
+                        Whiteboard
+                    </button>
+                </div>
             </div>
             
             <div id="whiteboard-container" class="hidden absolute top-[72px] bottom-[76px] left-0 right-0 z-20 bg-white/90 backdrop-blur-sm cursor-crosshair border-b border-gray-200 shadow-inner">
                 <canvas id="whiteboard" class="w-full h-full"></canvas>
             </div>
             
-            <div id='chat_container' class="overflow-y-auto grow p-4">
+            {% if is_opted_out %}
+            <div class="flex-1 flex flex-col items-center justify-center p-8 text-center bg-[#fffbf5]">
+                <div class="bg-orange-100 p-4 rounded-full mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                    </svg>
+                </div>
+                <h3 class="text-xl font-bold text-gray-800 mb-2">You have opted out of Public Chat</h3>
+                <p class="text-gray-500 text-sm max-w-sm mb-6">You are currently hidden from Public Chat. Re-join anytime to chat with other members of the community.</p>
+                <a href="{% url 'toggle-public-chat' %}" class="bg-orange-500 hover:bg-orange-600 active:scale-95 text-white font-bold px-6 py-3 rounded-xl shadow-md hover:shadow-lg transition-all flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                    </svg>
+                    Re-join Public Chat
+                </a>
+            </div>
+            {% else %}
                 <ul id='chat_messages' class="flex flex-col justify-end gap-2">
                     {% for message in chat_messages reversed %}
                     {%include 'chat_message.html' %}
@@ -319,6 +359,7 @@
                     </div>
                 </form>
             </div>
+            {% endif %}
         </div>
     </div>
 </wrapper>
@@ -328,7 +369,9 @@
 <script>
     function scrollToBottom(){
         const container = document.getElementById('chat_container');
-        container.scrollTop = container.scrollHeight;
+        if (container) {
+            container.scrollTop = container.scrollHeight;
+        }
     }
     scrollToBottom();
 

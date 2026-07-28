@@ -11,6 +11,8 @@ from asgiref.sync import async_to_sync
 def chat_view(request, chatroom_name='public-chat'):
     if chatroom_name == 'public-chat':
         chat_group, created = ChatGroup.objects.get_or_create(group_name='public-chat')
+        if not request.user.profile.optout_public_chat:
+            chat_group.members.add(request.user)
     else:
         chat_group = get_object_or_404(ChatGroup, group_name=chatroom_name)
     chat_messages = chat_group.chat_messages.all()[:30]
@@ -48,9 +50,26 @@ def chat_view(request, chatroom_name='public-chat'):
         'chatroom_name': chatroom_name,
         'chat_group': chat_group,
         'users': users,
+        'is_opted_out': request.user.profile.optout_public_chat if chatroom_name == 'public-chat' else False,
     }
     
     return render(request,'chat.html',context)
+
+
+@login_required
+def toggle_public_chat_view(request):
+    profile = request.user.profile
+    profile.optout_public_chat = not profile.optout_public_chat
+    profile.save()
+    
+    public_chat, _ = ChatGroup.objects.get_or_create(group_name='public-chat')
+    if profile.optout_public_chat:
+        public_chat.members.remove(request.user)
+        public_chat.users_online.remove(request.user)
+    else:
+        public_chat.members.add(request.user)
+        
+    return redirect('home')
 
 
 
